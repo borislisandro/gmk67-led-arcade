@@ -1,0 +1,6 @@
+__pycache__/
+*.egg-info/
+build/
+dist/
+probe_results.json
+gmk67-backup-*.json

@@ -1,0 +1,4 @@
+# Zuoya GMK67 V2 (USB 36b0:3068) and its 2.4 GHz dongle (36b0:3002):
+# let the logged-in user talk to the VIA raw-HID interface without sudo.
+KERNEL=="hidraw*", ATTRS{idVendor}=="36b0", ATTRS{idProduct}=="3068", MODE="0660", TAG+="uaccess"
+KERNEL=="hidraw*", ATTRS{idVendor}=="36b0", ATTRS{idProduct}=="3002", MODE="0660", TAG+="uaccess"
