@@ -67,9 +67,34 @@ What I checked:
    QMK-derived firmwares the slot after the stock effects is where vendors put
    their own modes, typically a "custom per-key" or "direct/streaming" mode.
 
-Items 3 and 4 are promising, but they can only be confirmed by watching the
-LEDs. `tools/gmk67.py probe` is an interactive test that does exactly that (it
-asks you yes/no questions and bisects to the responsible packet).
+Items 3 and 4 looked promising but could only be confirmed by watching the
+LEDs, so a person watched the keyboard while the following ran:
+
+| Step | Lighting state | Packets streamed in a loop | What the person saw |
+|---|---|---|---|
+| VIA sanity check | effect 1, hue 170 | none | solid blue ✅ (VIA drives the LEDs) |
+| Hidden effect | **effect 46** | none | solid blue: looks the same as solid colour |
+| Round 1 | effect 46 | 1,280 `0xBB` packets (256 sub-commands x 5 common per-key layouts, all "red") | no change |
+| Round 2 | effect 0 (none) | the same plus 1,275 `0x07 03 <id 5-255>` *set-value* packets (set-only vendor extensions are invisible to a read sweep) | all dark, no key lit |
+| Round 3 | effect 1 (solid blue) | same 2,555 packets | steady blue, no flicker |
+
+**Result: no per-key control was found on the stock V2 firmware.** Effect 46 is
+just another solid-style effect, and neither `0xBB` nor undocumented RGB-matrix
+value ids change any individual LED. Keymap, macros and lighting were verified
+unchanged afterwards.
+
+Two vendor files were also checked:
+
+* `LMK67 VIA JSON File.JSON` is for the **ZUOYA LMK67** (`320F:5055`), a
+  different board. VIA won't attach it to `36b0:3068`, and its lighting section
+  is a global effect list only.
+* `Zuoya GMK67 Keyboard Setup.exe` (Inno Setup, inspected with `innoextract`,
+  never executed) is the Windows driver for the **V1** only: its `device.xml`
+  lists only `05AC:024F`. It contains a firmware updater for an 8051-class "HFD801KJC" board,
+  which must **not** be flashed onto a V2.
+
+A USB capture of VIA itself setting a per-key colour (`usbmon`) would still
+settle the question immediately if such a menu exists somewhere.
 
 ## 4. Is it fast enough?
 
@@ -92,15 +117,14 @@ games will look good.
 | Path | Per-key? | Effort / risk | Status |
 |---|---|---|---|
 | **A. Stock firmware, VIA global colour** | No (whole board, one colour) | None | **Implemented**: `gmk67-ambient` backend flashes and tints the board with the game |
-| **B. Hidden vendor per-key mode** (`0xBB` / effect 46) | Maybe | Low; needs a human to watch LEDs | **Probe tool ready**: `tools/gmk67.py probe` |
+| **B. Hidden vendor per-key mode** (`0xBB` / effect 46 / set-only values) | No (tested) | Low | **Ruled out** by the visual probe (section 3) |
 | **C. OpenRGB** | Yes | None, *if* the keyboard is supported in Direct mode | **Implemented**: `openrgb` backend (any supported keyboard) |
 | **D. Custom QMK firmware on the GMK67** | Yes, natively | High: MCU unknown (needs opening the case); loses 2.4G/Bluetooth; brick risk | Not attempted |
 | **E. Games inside the firmware** | Yes | Requires D | Not attempted |
 
-Recommended order: run the probe (B). If it finds a per-key packet, a
-`gmk67-direct` backend is a small addition (about 60 lines next to
-`via_ambient.py`). If it finds nothing, the stock GMK67 stays a global-colour
-"mood light", and per-key play runs on the simulator or an OpenRGB-supported board.
+With B ruled out, the stock GMK67 V2 is a global-colour "mood light" for the
+games. Per-key play runs on the simulator or an OpenRGB-supported board, and
+real per-key play on this keyboard would need path D.
 
 ## 6. Safety notes
 

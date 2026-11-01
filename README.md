@@ -23,7 +23,7 @@ I investigated a real GMK67 V2 before writing code. The full log is in
 |---|---|
 | Is it fast enough to look good? | **Yes, easily.** The keyboard accepts ~470 lighting commands/s with a 2 ms round trip. A per-key frame would take ~8 USB reports, which is roughly **60 fps**. Snake needs 3-7 updates/s. |
 | Can the **stock** firmware light individual keys? | **Not through documented VIA.** The firmware is a closed-source QMK derivative speaking VIA protocol v12, and VIA only exposes *global* lighting (effect, brightness, speed, one colour). |
-| Any hidden per-key mode? | **Two promising leads**: an undocumented vendor command `0xBB` (the only unknown id that the firmware swallows silently) and a hidden lighting effect **#46** beyond the 45 listed in VIA. They have to be confirmed by eye, so there is an interactive probe for that: `tools/gmk67.py probe`. |
+| Any hidden per-key mode? | **Tested, none found.** The leads (silent vendor command `0xBB`, hidden effect #46, undocumented set-only lighting values) were streamed to the board while a person watched: no individual key ever changed. |
 | So what works today? | All games run fully per-key in the **terminal simulator** and on any keyboard **OpenRGB** drives in Direct mode. The physical GMK67 joins in through the **`gmk67-ambient`** backend: the whole board takes the game's colour and flashes on events (apple eaten, death, win). |
 | Custom firmware? | Possible in principle, since it's QMK-derived, but the MCU is unidentified (the case has to be opened), the wireless stack is proprietary, and flashing risks a brick. Documented as an option, not done. |
 
@@ -109,7 +109,7 @@ Quitting: **Esc** in Snake. In games that use every key (where Esc is a cell),
 
 ## Probing your GMK67 for a per-key mode
 
-This is the most useful next step, and it needs a human looking at the keyboard:
+Already done once on a V2 (negative, see docs/FEASIBILITY.md). It's useful for other firmware versions, and it needs a human looking at the keyboard in an interactive terminal:
 
 ```bash
 sudo python3 tools/gmk67.py backup            # keymap + macros + lighting -> json
@@ -182,7 +182,7 @@ one-minute random-input smoke test of every game.
 
 ## Roadmap
 
-- [ ] Run `tools/gmk67.py probe` on the GMK67 and, if a per-key packet exists, add a `gmk67-direct` backend
+- [x] Probe the stock GMK67 V2 for a hidden per-key mode (none found, see FEASIBILITY.md)
 - [ ] Measure VIA latency through the 2.4 GHz dongle (it exposes the same interface)
 - [ ] Identify the MCU (open the case) to judge whether a QMK + OpenRGB port is realistic
 - [ ] More games: Pong across two rows, a rhythm game, two-player Tron (WASD vs arrows)

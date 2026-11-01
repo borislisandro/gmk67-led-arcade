@@ -177,6 +177,8 @@ def main() -> None:
         elif args[0] == "restore" and len(args) > 1:
             cmd_restore(dev, args[1])
         elif args[0] == "probe":
+            if not sys.stdin.isatty():
+                sys.exit("probe asks yes/no questions: run it in a real interactive terminal")
             cmd = int(args[1], 0) if len(args) > 1 else 0xBB
             r = dev.query(cmd)
             if r is not None and r[0] == UNHANDLED:
